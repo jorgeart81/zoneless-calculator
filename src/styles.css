@@ -7,3 +7,7 @@
 .is-double-size {
   @apply w-2/4 bg-indigo-600;
 }
+
+.is-pressed {
+  @apply bg-indigo-800;
+}
