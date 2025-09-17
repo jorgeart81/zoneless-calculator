@@ -1,2 +1,9 @@
-/* You can add global styles to this file, and also import other style files */
 @import "tailwindcss";
+
+.is-command {
+  @apply bg-indigo-700/20;
+}
+
+.is-double-size {
+  @apply w-2/4 bg-indigo-600;
+}
