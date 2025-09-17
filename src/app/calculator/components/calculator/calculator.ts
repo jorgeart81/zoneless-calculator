@@ -45,6 +45,8 @@ export class Calculator implements AfterViewInit {
     const keyMap: Record<string, string> = {
       'c': 'C',
       'C': 'C',
+      'Escape': 'C',
+      'Clear': 'C',
       '%': '%',
       '/': '÷',
       '*': 'x',
@@ -57,7 +59,6 @@ export class Calculator implements AfterViewInit {
       '±': '+/-',
       'Backspace': 'DEL',
       'Delete': 'AC',
-      'Escape': 'AC',
       '0': '0',
       '1': '1',
       '2': '2',

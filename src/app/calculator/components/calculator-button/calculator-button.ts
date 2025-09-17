@@ -4,10 +4,11 @@ import { AfterViewInit, Component, ElementRef, input, output, signal, viewChild 
   selector: 'calculator-button',
   templateUrl: './calculator-button.html',
   host: {
-    class: 'w-1/4 border-r border-b border-indigo-400',
+    class: 'border-r border-b border-indigo-400',
     attribute: 'key-button',
     '[class.is-command]': 'isCommand()',
     '[class.is-double-size]': 'isDoubleSize()',
+    '[class.w-1/4]': '!isDoubleSize()',
     '[class.is-pressed]': 'isPressed()',
   }
 })
