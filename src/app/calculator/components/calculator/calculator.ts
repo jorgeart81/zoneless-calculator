@@ -22,7 +22,6 @@ export class Calculator implements AfterViewInit {
 
   ngAfterViewInit(): void {
     this.buttonsMatrix = this.getButtonsMatrix();
-    console.log({ buttonsMatrix: this.buttonsMatrix })
   }
 
   handleClick(key: string) {
