@@ -1,4 +1,6 @@
-import { AfterViewInit, Component, Signal, viewChildren } from '@angular/core';
+import { AfterViewInit, Component, computed, inject, Signal, viewChildren } from '@angular/core';
+
+import { Calculate } from '@/calculator/services/calculate';
 import { CalculatorButton } from "../calculator-button/calculator-button";
 
 @Component({
@@ -10,21 +12,31 @@ import { CalculatorButton } from "../calculator-button/calculator-button";
   }
 })
 export class Calculator implements AfterViewInit {
-  public calculatorButtons: Signal<readonly CalculatorButton[]> = viewChildren(CalculatorButton)
+  private caculateService = inject(Calculate)
   private buttonsMatrix: Record<string, CalculatorButton | undefined> = {}
+  public calculatorButtons: Signal<readonly CalculatorButton[]> = viewChildren(CalculatorButton)
+
+  public resultText = computed(() => this.caculateService.resultText())
+  public subResultText = computed(() => this.caculateService.subResultText())
+  public lastOperator = computed(() => this.caculateService.lastOperator())
 
   ngAfterViewInit(): void {
     this.buttonsMatrix = this.getButtonsMatrix();
+    console.log({ buttonsMatrix: this.buttonsMatrix })
   }
 
-  handleClick(key: string) { console.log({ key }) }
+  handleClick(key: string) {
+    const mappedKey = this.mapButtonToKey(key);
+    console.log({ mappedKey })
+  }
 
   // @HostListener('document:keyup', ['$event'])
   handleKeyboardEvent(event: KeyboardEvent) {
-    const key = this.mapKeyToButtonId(event.key);
-    if (!key) return;
+    if (!this.caculateService.isAllowKey(event.key)) return;
 
-    this.handleClick(key)
+    this.handleClick(event.key);
+
+    const key = this.mapKeyToButton(event.key);
     this.buttonsMatrix[key]?.keyboardPressedStyle(key)
   }
 
@@ -41,38 +53,33 @@ export class Calculator implements AfterViewInit {
     return matrix;
   }
 
-  private mapKeyToButtonId(key: string): string | undefined {
+  private mapKeyToButton(key: string): string {
     const keyMap: Record<string, string> = {
-      'c': 'C',
-      'C': 'C',
       'Escape': 'C',
       'Clear': 'C',
-      '%': '%',
       '/': '÷',
       '*': 'x',
-      '-': '-',
-      '+': '+',
-      '=': '=',
       'Enter': '=',
       '.': '.',
       ',': '.',
       '±': '+/-',
-      'Backspace': 'DEL',
-      'Delete': 'AC',
-      '0': '0',
-      '1': '1',
-      '2': '2',
-      '3': '3',
-      '4': '4',
-      '5': '5',
-      '6': '6',
-      '7': '7',
-      '8': '8',
-      '9': '9',
+      'Delete': 'C',
     };
 
-    return keyMap[key];
+    return keyMap[key] || key;
   }
+
+  private mapButtonToKey(key: string): string {
+    const keyMap: Record<string, string> = {
+      '÷': '/',
+      'x': '*',
+      '+/-': '±',
+      'C': 'Clear',
+    };
+
+    return keyMap[key] || key;
+  }
+
 }
 
 
