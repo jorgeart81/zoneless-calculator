@@ -27,11 +27,16 @@ export class Calculator implements AfterViewInit {
   handleClick(key: string) {
     const mappedKey = this.mapButtonToKey(key);
     console.log({ mappedKey })
+    this.caculateService
+      .setKey(mappedKey)
+      .useCommand()
+      .useOperator()
+      .buildNumber();
   }
 
   // @HostListener('document:keyup', ['$event'])
   handleKeyboardEvent(event: KeyboardEvent) {
-    if (!this.caculateService.isAllowKey(event.key)) return;
+    if (!Calculate.isAllowKey(event.key)) return;
 
     this.handleClick(event.key);
 
@@ -74,6 +79,7 @@ export class Calculator implements AfterViewInit {
       'x': '*',
       '+/-': '±',
       'C': 'Clear',
+      '=': 'Enter',
     };
 
     return keyMap[key] || key;
