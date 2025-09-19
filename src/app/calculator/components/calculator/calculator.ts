@@ -18,7 +18,7 @@ export class Calculator implements AfterViewInit {
 
   public resultText = computed(() => this.caculateService.resultText())
   public subResultText = computed(() => this.caculateService.subResultText())
-  public lastOperator = computed(() => this.caculateService.lastOperator())
+  public lastOperator = computed(() => this.caculateService.lastOperatorText())
 
   ngAfterViewInit(): void {
     this.buttonsMatrix = this.getButtonsMatrix();
@@ -26,12 +26,12 @@ export class Calculator implements AfterViewInit {
 
   handleClick(key: string) {
     const mappedKey = this.mapButtonToKey(key);
-    console.log({ mappedKey })
+
     this.caculateService
       .setKey(mappedKey)
-      .useCommand()
-      .useOperator()
-      .buildNumber();
+      .buildNumber()
+      .buildFormula()
+      .tested()
   }
 
   // @HostListener('document:keyup', ['$event'])
@@ -49,7 +49,7 @@ export class Calculator implements AfterViewInit {
 
     this.calculatorButtons().forEach(button => {
       const value = button.contentValue()?.nativeElement?.innerText.trim();
-      if (!value) return;
+      if (value === undefined) return;
 
       matrix[value] = button;
     });

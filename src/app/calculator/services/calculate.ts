@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { CalculatorAction, calculatorAllowedKeys, calculatorNumberKeys, CalculatorOperator } from './calculatorKeys';
+import { mapAllowedCalculatorKey, type CalculatorNumberKey, type CalculatorKey, type CalculatorOperatorKey, calculateOperatorKeys } from './calculatorKeys';
 
 
 @Injectable({
@@ -8,17 +8,92 @@ import { CalculatorAction, calculatorAllowedKeys, calculatorNumberKeys, Calculat
 export class Calculate {
   public resultText = signal('10')
   public subResultText = signal('0')
-  public lastOperator = signal('+')
-  private _lastCalculatorOperator: CalculatorOperator = 'ADD'
-  private _allowKey: number | CalculatorAction | undefined
+  public lastOperatorText = signal('+')
+  private _allowKey: number | CalculatorKey | undefined
+  private _keyCommand: CalculatorKey | null = null
+  private _keyNumber: CalculatorNumberKey | null = null
+  private _keyOperator: CalculatorOperatorKey | null = null
+  private _lastCalculatorOperator: CalculatorOperatorKey | null = null
+  private _formula: Array<CalculatorOperatorKey | number> = []
+  private _builtTextNumber: string = ''
 
-  public static isAllowKey = (key: string) => calculatorAllowedKeys[key] !== undefined
+  public static isAllowKey = (key: string) => mapAllowedCalculatorKey(key) !== undefined
 
   public setKey(key: string) {
-    this._allowKey = calculatorAllowedKeys[key]
-    if (this._allowKey === undefined) return this;
+    const allowedKey = mapAllowedCalculatorKey(key)
+    if (allowedKey === undefined) throw new Error('Key not allowed');
+
+    const { keyNumber, keyCommand, keyOperator } = allowedKey;
+    this._allowKey = keyCommand || keyNumber || keyOperator;
+
+    this._keyCommand = keyCommand;
+    this._keyNumber = keyNumber;
+    this._keyOperator = keyOperator;
 
     return this
+  };
+
+  public buildNumber = () => {
+    const inputValue = this._keyNumber;
+    const formattedNumber = this._builtTextNumber;
+
+    if (inputValue === null) return this;
+    if (inputValue === '.' && formattedNumber.includes('.')) return this;
+    if (inputValue === '0' && formattedNumber == '0') return this;
+    if (inputValue !== '0' && inputValue !== '.' && formattedNumber == '0') {
+      this._builtTextNumber = inputValue;
+      return this;
+    }
+
+    this._builtTextNumber = formattedNumber + inputValue.toString();
+
+    return this
+  }
+
+  public buildFormula = () => {
+    const builtNumber = this._builtTextNumber
+    const operator = this._keyOperator
+
+    this.addNumerToFormula(builtNumber, operator)
+    this.addOperatorToFormula(builtNumber, operator)
+
+    return this
+  }
+
+  public tested() {
+    console.log('tested', { formula: this._formula })
+  }
+
+  private addNumerToFormula(builtNumber: string, operator: CalculatorOperatorKey | null) {
+    const lastValue = this._formula[this._formula.length - 1]
+
+    if (builtNumber.trim() === '') return
+
+    if (lastValue === undefined || typeof lastValue === 'number') {
+      this._formula.pop()
+      this._formula.push(parseFloat(builtNumber));
+    }
+
+    if (lastValue !== undefined && typeof lastValue !== 'number') {
+      this._formula.push(parseFloat(builtNumber));
+    }
+  }
+
+  private addOperatorToFormula(builtNumber: string, operator: CalculatorOperatorKey | null) {
+    const lastValue = this._formula[this._formula.length - 1]
+    if (lastValue === undefined || operator === null || operator === 'EQUAL' || operator === 'NEGATE') return
+    if (this._formula.length <= 0) return
+
+    if (typeof lastValue !== 'number') {
+      console.log('replace operator')
+      this._formula.pop();
+      this._formula.push(operator);
+      this._builtTextNumber = ''
+      return
+    }
+
+    this._formula.push(operator);
+    this._builtTextNumber = ''
   }
 
   public useCommand() {
@@ -32,75 +107,13 @@ export class Calculate {
     return this
   }
 
-  public useOperator() {
-    this.calculateOperation(this._allowKey as CalculatorOperator);
-    return this;
-  }
+  private testForm: any[] = []
 
-  public buildNumber = () => {
-    const num = `${this._allowKey}`;
-    const current = this.resultText();
-
-    if (!calculatorNumberKeys.includes(num)) return;
-    if (num === '.' && current.includes('.')) return;
-    if (num === '0' && current == '0') return
-    if (num !== '0' && num !== '.' && current == '0') {
-      this.resultText.set(num);
-      return
-    }
-
-    this.resultText.update(prev => prev + num.toString());
-  }
-
-  private delete = () => {
-    const currentValue = this.resultText();
-    if (currentValue === '0') return;
-    if (currentValue.length === 1) {
-      this.resultText.set('0');
-      return;
-    }
-
-    this.resultText.update(prev => prev.slice(0, -1) || '0');
-  }
-
-  private clear = () => {
-    this.resultText.set('0');
-    this.subResultText.set('0');
-    this.lastOperator.set('+');
-    this._lastCalculatorOperator = 'ADD';
-  }
-
-  private calculateOperation = (operator: CalculatorOperator) => {
-    const currentValue = parseFloat(this.resultText());
-    const subValue = parseFloat(this.subResultText());
-    const isTheSameOperator = operator === this._lastCalculatorOperator;
-
-    if (operator === 'EQUAL') {
-      const operatorFunction = this.getOperatorFunctions(this._lastCalculatorOperator);
-      if (!operatorFunction) { return };
-
-      const { result } = operatorFunction(currentValue, subValue);
-      this.resultText.set(result);
-      this.subResultText.set('0');
-      this.lastOperator.set('+');
-      this._lastCalculatorOperator = 'ADD';
-      return;
-    }
-
-    const operatorFunction = this.getOperatorFunctions(operator);
-    if (!operatorFunction) return;
-
-    const { result, operatorSymbol, operatorCalc } = operatorFunction(currentValue, subValue);
-
-    this.subResultText.set(result);
-    this.resultText.set('0');
-    this.lastOperator.set(operatorSymbol);
-    this._lastCalculatorOperator = operatorCalc;
-  }
-
-  private getOperatorFunctions(operator: CalculatorOperator) {
+  private getOperatorFunctions(operator: CalculatorOperatorKey) {
+    console.log({ operator })
     const functions = {
       'ADD': (value: number, subValue: number) => {
+        this.testForm
         return { result: `${value + subValue}`, operatorSymbol: '+', operatorCalc: operator }
       },
 
@@ -141,5 +154,28 @@ export class Calculate {
     }
 
     return undefined;
+  }
+
+  private delete = () => {
+    const currentValue = this.resultText();
+    if (currentValue === '0') return;
+    if (currentValue.length === 1) {
+      this.resultText.set('0');
+      return;
+    }
+
+    this.resultText.update(prev => prev.slice(0, -1) || '0');
+  }
+
+  private clear = () => {
+    this.resultText.set('0');
+    this.subResultText.set('0');
+    this.lastOperatorText.set('+');
+    this._lastCalculatorOperator = null;
+    this._keyCommand = null;
+    this._keyNumber = null;
+    this._keyOperator = null;
+    this._allowKey = undefined;
+    this._formula = [];
   }
 }

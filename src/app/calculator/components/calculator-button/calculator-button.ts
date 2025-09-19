@@ -32,12 +32,12 @@ export class CalculatorButton implements AfterViewInit {
   });
 
   handleClick() {
-    if (!this.button) return
+    if (this.button === undefined) return
     this.onClick.emit(this.button.innerText.trim());
   }
 
   public keyboardPressedStyle(key: string) {
-    if (!this.button) return
+    if (this.button == undefined) return
     const value = this.button.innerText.trim()
 
     if (key.trim() !== value) return
