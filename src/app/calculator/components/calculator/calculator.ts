@@ -29,6 +29,7 @@ export class Calculator implements AfterViewInit {
 
     this.caculateService
       .setKey(mappedKey)
+      .useCommand()
       .buildNumber()
       .buildFormula()
       .tested()

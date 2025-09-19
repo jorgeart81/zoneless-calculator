@@ -29,7 +29,6 @@ export class Calculate {
     this._keyCommand = keyCommand;
     this._keyNumber = keyNumber;
     this._keyOperator = keyOperator;
-
     return this
   };
 
@@ -58,10 +57,6 @@ export class Calculate {
     this.addOperatorToFormula(builtNumber, operator)
 
     return this
-  }
-
-  public tested() {
-    console.log('tested', { formula: this._formula })
   }
 
   private addNumerToFormula(builtNumber: string, operator: CalculatorOperatorKey | null) {
@@ -157,25 +152,42 @@ export class Calculate {
   }
 
   private delete = () => {
-    const currentValue = this.resultText();
-    if (currentValue === '0') return;
-    if (currentValue.length === 1) {
-      this.resultText.set('0');
-      return;
+    if (this._formula.length <= 0) return
+    this._keyNumber = null
+    this._builtTextNumber = ''
+
+    const lastValue = this._formula[this._formula.length - 1]
+
+    if (typeof lastValue === 'number') {
+      const textNumber = lastValue.toString();
+
+      if (textNumber.length > 1) {
+        this._builtTextNumber = textNumber.slice(0, -1)
+        return
+      }
+
+      this._builtTextNumber = ''
     }
 
-    this.resultText.update(prev => prev.slice(0, -1) || '0');
+    this._formula.pop()
   }
 
   private clear = () => {
-    this.resultText.set('0');
-    this.subResultText.set('0');
-    this.lastOperatorText.set('+');
     this._lastCalculatorOperator = null;
     this._keyCommand = null;
     this._keyNumber = null;
     this._keyOperator = null;
     this._allowKey = undefined;
+    this._builtTextNumber = ''
     this._formula = [];
+    this.resultText.set('0');
+    this.subResultText.set('0');
+    this.lastOperatorText.set('+');
   }
+
+  public tested() {
+    console.log('tested', { keyCommand: this._allowKey, builtText: this._builtTextNumber, keyNumber: this._keyNumber })
+    console.log('tested', { formula: this._formula })
+  }
+
 }
