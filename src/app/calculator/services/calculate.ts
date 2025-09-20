@@ -9,15 +9,12 @@ export class Calculate {
   public resultText = signal('0')
   public subResultText = signal('0')
   public lastOperatorText = signal('+')
-  private _allowKey: number | CalculatorKey | undefined
   private _keyCommand: CalculatorKey | null = null
   private _keyNumber: CalculatorNumberKey | null = null
   private _keyOperator: CalculatorOperatorKey | null = null
-  private _lastCalculatorOperator: CalculatorOperatorKey | null = null
   private _formula: Array<CalculatorOperatorKey | number> = []
   private _builtTextNumber: string = ''
   private _nativeKey: string = ''
-  private _formulaLastValue = this._formula[this._formula.length - 1]
 
   public static isAllowKey = (key: string) => mapAllowedCalculatorKey(key) !== undefined
 
@@ -28,7 +25,6 @@ export class Calculate {
     this._nativeKey = key;
 
     const { keyNumber, keyCommand, keyOperator } = allowedKey;
-    this._allowKey = keyCommand || keyNumber || keyOperator;
 
     this._keyCommand = keyCommand;
     this._keyNumber = keyNumber;
@@ -45,18 +41,16 @@ export class Calculate {
     if (this._keyCommand === 'DELETE') this.delete();
 
     if (this._keyOperator && this._keyOperator !== 'EQUAL' && this._keyOperator !== 'NEGATE') {
-      if (this._builtTextNumber.trim().length > 0) this.subResultText.set(this._builtTextNumber);
+      if (this._builtTextNumber.trim().length > 0 && this._formula.length === 1) this.subResultText.set(this._builtTextNumber);
       this.lastOperatorText.set(this._nativeKey);
     }
 
     this.buildNumber()
     this.buildFormula()
+    this.gerResult()
     this.tested()
-
     this.resultText.set(this._builtTextNumber || '0');
   }
-
-
 
   private buildNumber = () => {
     const inputValue = this._keyNumber;
@@ -84,7 +78,7 @@ export class Calculate {
   }
 
   private addNumerToFormula(builtNumber: string) {
-    const lastValue = this._formulaLastValue
+    const lastValue = this._formula[this._formula.length - 1]
 
     if (builtNumber.trim() === '') return
 
@@ -115,63 +109,35 @@ export class Calculate {
     this._builtTextNumber = ''
   }
 
-  private addition(a: number, b: number) {
-    a + b
-
-  };
-
   private gerResult() {
-    if (this._formula.length <= 0) return;
-    if (this._formula.length === 1 && typeof this._formula[0] === 'number') {
-      this.resultText.set(this._formula[0].toString());
-      return;
-    }
-  }
-
-  private getOperatorFunctions(operator: CalculatorOperatorKey) {
-    console.log({ operator })
-    const functions = {
-      'ADD': (value: number, subValue: number) => {
-        return { result: `${value + subValue}`, operatorSymbol: '+', operatorCalc: operator }
-      },
-
-      'SUBTRACT': (value: number, subValue: number) => {
-        return { result: `${value - subValue}`, operatorSymbol: '-', operatorCalc: operator }
-      },
-
-      'MULTIPLY': (value: number, subValue: number) => {
-        let multiplicand = value;
-        let multiplier = subValue === 0 ? 1 : subValue;;
-
-        return { result: `${multiplicand * multiplier}`, operatorSymbol: '*', operatorCalc: operator }
-      },
-
-      'DIVIDE': (value: number, subValue: number) => {
-        let dividend = value;
-        let divider = subValue === 0 ? 1 : subValue;
-
-        if (subValue !== 0) {
-          dividend = subValue
-          divider = value
-        }
-
-        return { result: `${dividend / divider}`, operatorSymbol: '/', operatorCalc: operator }
-      },
-
-      'PERCENT': (value: number, subValue: number) => {
-        return { result: `${(subValue / 100) * value}`, operatorSymbol: '%', operatorCalc: this._lastCalculatorOperator }
-      },
-    } as const;
-
-    if (operator === 'EQUAL') {
-
+    const updateAfterResult = (result: number, operator: CalculatorOperatorKey) => {
+      this.subResultText.set(`${result}`);
+      this._formula = [result, operator];
+      this._builtTextNumber = '';
     }
 
-    if (operator in functions) {
-      return functions[operator as keyof typeof functions];
-    }
+    if (this._formula.length >= 3 && this._builtTextNumber.trim().length === 0) {
+      const [a, operator, b] = this._formula;
+      if (typeof a !== 'number' || typeof b !== 'number' || typeof operator !== 'string') return;
 
-    return undefined;
+      switch (operator) {
+        case 'ADD':
+          updateAfterResult(a + b, this._keyOperator ?? operator);
+          break;
+        case 'SUBTRACT':
+          updateAfterResult(a - b, this._keyOperator ?? operator);
+          break;
+        case 'MULTIPLY':
+          updateAfterResult(a * b, this._keyOperator ?? operator);
+          break;
+        case 'DIVIDE':
+          updateAfterResult(a / b, this._keyOperator ?? operator);
+          break;
+        case 'PERCENT':
+          updateAfterResult((b / 100) * a, this._keyOperator ?? operator);
+          break
+      }
+    }
   }
 
   private delete = () => {
@@ -196,11 +162,9 @@ export class Calculate {
   }
 
   private clear = () => {
-    this._lastCalculatorOperator = null;
     this._keyCommand = null;
     this._keyNumber = null;
     this._keyOperator = null;
-    this._allowKey = undefined;
     this._builtTextNumber = ''
     this._formula = [];
     this.resultText.set('0');
@@ -209,7 +173,7 @@ export class Calculate {
   }
 
   public tested() {
-    console.log('tested', { keyCommand: this._allowKey, builtText: this._builtTextNumber, keyNumber: this._keyNumber })
+    // console.log('tested', { keyCommand: this._allowKey, builtText: this._builtTextNumber, keyNumber: this._keyNumber })
     console.log('tested', { formula: this._formula })
   }
 
