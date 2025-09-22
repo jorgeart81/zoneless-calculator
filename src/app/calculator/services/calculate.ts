@@ -15,6 +15,15 @@ export class Calculate {
   private _formula: Array<CalculatorOperatorKey | number> = []
   private _builtTextNumber: string = ''
   private _nativeKey: string = ''
+  private _operations: Record<CalculatorOperatorKey, (a: number, b: number) => number> = {
+    'ADD': (a: number, b: number) => a + b,
+    'SUBTRACT': (a: number, b: number) => a - b,
+    'MULTIPLY': (a: number, b: number) => a * b,
+    'DIVIDE': (a: number, b: number) => a / b,
+    'EQUAL': (a: number, b: number) => b,
+    'PERCENT': (a: number) => a / 100,
+    'NEGATE': (a: number) => a * -1,
+  }
 
   public static isAllowKey = (key: string) => mapAllowedCalculatorKey(key) !== undefined
 
@@ -40,10 +49,26 @@ export class Calculate {
 
     if (this._keyCommand === 'DELETE') this.delete();
 
+    if (this._keyOperator === 'NEGATE') {
+      const result = Number(this._builtTextNumber) * -1;
+      this._builtTextNumber = result.toString();
+    }
+
+    if (this._keyOperator === 'EQUAL' && this._formula.length === 3) {
+      const [a, operator, b] = this._formula;
+      if (typeof a !== 'number' || typeof b !== 'number' || typeof operator !== 'string') return;
+
+      const result = this._operations[operator](a, b);
+      this.clear();
+      this._formula = [result];
+      this._builtTextNumber = result.toString();
+    }
+
     if (this._keyOperator && this._keyOperator !== 'EQUAL' && this._keyOperator !== 'NEGATE') {
       if (this._builtTextNumber.trim().length > 0 && this._formula.length === 1) this.subResultText.set(this._builtTextNumber);
       this.lastOperatorText.set(this._nativeKey);
     }
+
 
     this.buildNumber()
     this.buildFormula()
@@ -110,33 +135,49 @@ export class Calculate {
   }
 
   private gerResult() {
-    const updateAfterResult = (result: number, operator: CalculatorOperatorKey) => {
+    const updateAfterResult = (result: number, operator: CalculatorOperatorKey | null) => {
       this.subResultText.set(`${result}`);
-      this._formula = [result, operator];
+      this._formula = operator === null ? [result] : [result, operator];
       this._builtTextNumber = '';
     }
 
-    if (this._formula.length >= 3 && this._builtTextNumber.trim().length === 0) {
-      const [a, operator, b] = this._formula;
-      if (typeof a !== 'number' || typeof b !== 'number' || typeof operator !== 'string') return;
+    if (this._builtTextNumber.trim().length > 0 || this._formula.length <= 1) return
 
-      switch (operator) {
-        case 'ADD':
-          updateAfterResult(a + b, this._keyOperator ?? operator);
-          break;
-        case 'SUBTRACT':
-          updateAfterResult(a - b, this._keyOperator ?? operator);
-          break;
-        case 'MULTIPLY':
-          updateAfterResult(a * b, this._keyOperator ?? operator);
-          break;
-        case 'DIVIDE':
-          updateAfterResult(a / b, this._keyOperator ?? operator);
-          break;
-        case 'PERCENT':
-          updateAfterResult((b / 100) * a, this._keyOperator ?? operator);
-          break
-      }
+    const [a, operator, b, operator2] = this._formula;
+
+    if (typeof a !== 'number' || typeof operator !== 'string') return;
+
+    if (operator === 'PERCENT' && this._formula.length === 2) {
+      updateAfterResult(a / 100, null);
+      return
+    }
+
+    if (typeof b !== 'number') return;
+
+    switch (operator2) {
+      case 'PERCENT':
+        const percentValue = (b / 100) * a;
+        const percentResult = this._operations[operator](a, percentValue);
+
+        this.clear();
+        this._formula = [percentResult];
+        this._builtTextNumber = percentResult.toString();
+        return;
+    }
+
+    switch (operator) {
+      case 'ADD':
+        updateAfterResult(a + b, this._keyOperator ?? operator);
+        break;
+      case 'SUBTRACT':
+        updateAfterResult(a - b, this._keyOperator ?? operator);
+        break;
+      case 'MULTIPLY':
+        updateAfterResult(a * b, this._keyOperator ?? operator);
+        break;
+      case 'DIVIDE':
+        updateAfterResult(a / b, this._keyOperator ?? operator);
+        break;
     }
   }
 
