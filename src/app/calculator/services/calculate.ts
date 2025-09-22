@@ -73,7 +73,6 @@ export class Calculate {
     this.buildNumber()
     this.buildFormula()
     this.gerResult()
-    this.tested()
     this.resultText.set(this._builtTextNumber || '0');
   }
 
@@ -211,11 +210,6 @@ export class Calculate {
     this.resultText.set('0');
     this.subResultText.set('0');
     this.lastOperatorText.set('+');
-  }
-
-  public tested() {
-    // console.log('tested', { keyCommand: this._allowKey, builtText: this._builtTextNumber, keyNumber: this._keyNumber })
-    console.log('tested', { formula: this._formula })
   }
 
 }
