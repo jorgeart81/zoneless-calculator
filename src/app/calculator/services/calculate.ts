@@ -80,6 +80,7 @@ export class Calculate {
     const inputValue = this._keyNumber;
     const formattedNumber = this._builtTextNumber;
 
+    if (formattedNumber.length >= 8) return
     if (inputValue === null) return
     if (inputValue === '.' && formattedNumber.includes('.')) return
     if (inputValue === '0' && formattedNumber == '0') return
@@ -122,7 +123,6 @@ export class Calculate {
     if (this._formula.length <= 0) return
 
     if (typeof currentLastValue !== 'number') {
-      console.log('replace operator')
       this._formula.pop();
       this._formula.push(operator);
       this._builtTextNumber = ''
@@ -135,6 +135,7 @@ export class Calculate {
 
   private gerResult() {
     const updateAfterResult = (result: number, operator: CalculatorOperatorKey | null) => {
+
       this.subResultText.set(`${result}`);
       this._formula = operator === null ? [result] : [result, operator];
       this._builtTextNumber = '';

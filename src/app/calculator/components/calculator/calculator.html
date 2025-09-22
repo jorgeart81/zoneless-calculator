@@ -1,10 +1,11 @@
-<div class="w-full h-40 bg-gradient-to-b from-gray-800 to-gray-700 flex items-end text-right">
-  <div class="w-full py-5 px-6 text-6xl text-white font-thin">
+<div class=" relative w-full h-40 bg-gradient-to-b from-gray-800 to-gray-700 flex items-end text-right">
+  <div class="relative w-full pb-5 mx-5 text-6xl text-white font-thin" [ngClass]="{'pt-5': subResultText() ==='0'}">
     @if(subResultText() !=='0'){
-    <span class="text-4xl">{{subResultText()}} {{lastOperator()}}</span>
+    <span [ngClass]="subResultText().length >= 13 ? 'text-3xl' : 'text-4xl'">{{subResultText()}}
+      {{lastOperator()}}</span>
     <br>
     }
-    <span>{{resultText()}}</span>
+    <span class="text-result" [ngClass]="{'text-4xl': resultText().length > 10}">{{resultText()}}</span>
   </div>
 </div>
 

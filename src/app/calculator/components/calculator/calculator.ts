@@ -2,10 +2,11 @@ import { AfterViewInit, Component, computed, inject, Signal, viewChildren } from
 
 import { Calculate } from '@/calculator/services/calculate';
 import { CalculatorButton } from "../calculator-button/calculator-button";
+import { NgClass } from '@angular/common';
 
 @Component({
   selector: 'calculator',
-  imports: [CalculatorButton],
+  imports: [CalculatorButton, NgClass],
   templateUrl: './calculator.html',
   host: {
     '(document:keyup)': 'handleKeyboardEvent($event)'
