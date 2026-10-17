@@ -148,21 +148,27 @@ export class Calculate {
     if (typeof a !== 'number' || typeof operator !== 'string') return;
 
     if (operator === 'PERCENT' && this._formula.length === 2) {
-      updateAfterResult(a / 100, null);
+      const result = a / 100;
+      this.clear();
+      this._formula = [result];
+      this._builtTextNumber = result.toString();
       return
     }
 
     if (typeof b !== 'number') return;
 
     switch (operator2) {
-      case 'PERCENT':
-        const percentValue = (b / 100) * a;
+      case 'PERCENT': {
+        const percentValue = (operator === 'ADD' || operator === 'SUBTRACT')
+          ? (b / 100) * a
+          : b / 100;
         const percentResult = this._operations[operator](a, percentValue);
 
         this.clear();
         this._formula = [percentResult];
         this._builtTextNumber = percentResult.toString();
         return;
+      }
     }
 
     switch (operator) {
